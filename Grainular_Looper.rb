@@ -1,5 +1,5 @@
 # Granular Looper
-# Mark Wiem 2015/05/04
+# Mark Wiem 2015/10/13
 # play grainular portions of a sample at desired location, speed, and duration
 
 #load your local sample of choice
