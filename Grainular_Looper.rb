@@ -19,22 +19,17 @@ program req: value must be between 0-1
 solution - return user entered play_length, entered in seconds, as a value 0-1
 '''
 
-puts sample_duration(juicy_sound)
-
 #linearize the play_length of any sample between 0-1
 # based on the following equation
 # n2 = (B*C - A*D)/(B - A) + n1*(D - C)/(B - A)
-
 define :scale_UI_to_zero_one do |play_length_seconds, sample_length_seconds|
   scaled_sample_length = 0
   scaled_sample_length = play_length_seconds*(1/sample_length_seconds)
-  puts scaled_sample_length
   return scaled_sample_length
 end
 
 
 intro = start_location #scaled 0-1
-
 outro = intro + scale_UI_to_zero_one(play_length, sample_duration(juicy_sound)) #scaled 0-1
 
 sample juicy_sound, start: intro, finish: outro, attack: 0.1, release: 0.1, rate: 0.9
