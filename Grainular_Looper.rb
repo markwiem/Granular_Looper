@@ -1,39 +1,40 @@
-# Granular Looper
-# Mark Wiem 2015/10/13
-# play grainular portions of a sample at desired location, speed, and duration
+# Granular Looper Tests
+# Mark Wiem 2016/10/16
+# refactor and correct instrument's sample scaling 
 
 #load your local sample of choice
 juicy_sound = '/Users/markwiem/Documents/CODE/Sonic_Pi/Samples/TestSamples/BeNice.wav'
 
 #select the start positions, scaled between 0-1, for the playback points, as many as you'd like
-#value = [0.1, 0.5, 0.2, 0.6, 0.7, 0.6, 0.1, 0.11, 0.2, 0.6, 0.601]
-value = [0.1, 0.101, 0.1, 0.102]
+#start_location = [0.1, 0.5, 0.2, 0.6, 0.7, 0.6, 0.1, 0.11, 0.2, 0.6, 0.601]
+start_location = 0.35
 
-#desired length of sample play in seconds
-length = 0.5
+#desired play_length of sample play in seconds
+play_length = 5.75
 
-#linearize the length of any sample between 0-1
+'''
+user Req: Enter play_length as a value in seconds
+program req: value must be between 0-1
+
+solution - return user entered play_length, entered in seconds, as a value 0-1
+'''
+
+puts sample_duration(juicy_sound)
+
+#linearize the play_length of any sample between 0-1
 # based on the following equation
 # n2 = (B*C - A*D)/(B - A) + n1*(D - C)/(B - A)
-define :linear_scale do |input, in_range_low, in_range_high, out_range_low, out_range_high|
-  output = 0
-  output = (((in_range_high*out_range_low) - (in_range_low*out_range_high))/(in_range_high - in_range_low)) + (input*(out_range_high - out_range_low)/(in_range_high - in_range_low))
-  return output
+
+define :scale_UI_to_zero_one do |play_length_seconds, sample_length_seconds|
+  scaled_sample_length = 0
+  scaled_sample_length = play_length_seconds*(1/sample_length_seconds)
+  puts scaled_sample_length
+  return scaled_sample_length
 end
 
-#total_sample_length = sample_duration(juicy) #return sample duration in second
-total_sample_length = sample_duration(juicy_sound) #return sample duration in second
-scaled_sample_length = linear_scale(length, 0, total_sample_length, 0, 1) # return scaled sample length between 0-1
 
-count = 0
-loop do
-  intro = value[count]
-  outro = intro + scaled_sample_length
-  sample juicy_sound, start: intro, finish: outro, attack: 0.1, release: 0.1, rate: 0.9
-  sleep length # sleep in seconds
-  if count == (value.length)-1
-    count = 0
-  else
-    count += 1
-  end
-end
+intro = start_location #scaled 0-1
+
+outro = intro + scale_UI_to_zero_one(play_length, sample_duration(juicy_sound)) #scaled 0-1
+
+sample juicy_sound, start: intro, finish: outro, attack: 0.1, release: 0.1, rate: 0.9
