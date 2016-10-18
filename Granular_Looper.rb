@@ -4,14 +4,16 @@
 # First Official Version.
 #Allows for sample to be played at multiple points in file, for multiple lengths of time.
 
+#Work to add swing to samples to add variety to loops
+
 #load your local sample of choice
 juicy_sound = '/Users/markwiem/Documents/CODE/Sonic_Pi/Samples/TestSamples/BeNice.wav'
 
 #select the start positions, scaled between 0-1, for the playback points, as many as you'd like
-start_location = [0.35, 0.45, 0.55]
+start_location = [0.35, 0.37, 0.55]
 
 #desired play_length of sample play in seconds
-play_length = [0.5, 5, 1.5]
+play_length = [0.5, 0.35, 0.5]
 
 '''
 user Req: Enter play_length as a value in seconds
