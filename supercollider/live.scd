@@ -39,7 +39,7 @@
 
 // ---- Playback ----------------------------------------------------------
 
-// playRate: speed and pitch. 1 is the original, 0.5 is half speed and an
+// playRate (slice mode): speed and pitch. 1 is the original, 0.5 is half speed and an
 // octave down, 2 is double speed and an octave up. Negative numbers play
 // each slice backwards. Below 1, a slice sounds longer than its play
 // length and overlaps the next one. Above 1, it ends early and leaves a
@@ -58,6 +58,44 @@
 // If the two together are longer than a slice, both shrink to fit it.
 ~gl[\attackTime] = 0.01; ~gl[\releaseTime] = 0.3;
 (~gl[\attackTime] = 0.1; ~gl[\releaseTime] = 0.1;)
+
+
+// ---- Grain mode ------------------------------------------------------
+
+// mode: \slice plays each slice straight, so playRate changes speed and
+// pitch together. \grain plays it as many short overlapping grains, so
+// speed and pitch are set separately with the grain settings below and
+// playRate is ignored. Switching applies from the next slice.
+~gl[\mode] = \grain;
+~gl[\mode] = \slice;
+
+// grainSpeed: how fast each slice moves through the file, without changing
+// pitch. 0.5 is half speed (the slice lasts twice as long), negative plays
+// backwards, 0 freezes on the start point.
+~gl[\grainSpeed] = 0.5;
+~gl[\grainSpeed] = 0;
+~gl[\grainSpeed] = 1;
+
+// grainPitch: pitch as a ratio, without changing speed. 2 is an octave up,
+// 0.5 an octave down; .midiratio converts semitones.
+~gl[\grainPitch] = 0.5;
+~gl[\grainPitch] = 7.midiratio;
+~gl[\grainPitch] = 1;
+
+// grainSize: seconds per grain. Small is buzzy, large is smooth but blurs
+// drum hits. grainDensity: how many grains overlap at once (1-16).
+(~gl[\grainSize] = 0.03; ~gl[\grainDensity] = 2;)
+(~gl[\grainSize] = 0.25; ~gl[\grainDensity] = 8;)
+(~gl[\grainSize] = 0.1; ~gl[\grainDensity] = 4;)
+
+// grainJitter: scatters each grain up to this many seconds either side of
+// where the slice is playing. 0 is clean, 0.05-0.2 shimmers.
+~gl[\grainJitter] = 0.1;
+~gl[\grainJitter] = 0;
+
+// A frozen, shimmering pad an octave down from the current start points:
+(~gl[\mode] = \grain; ~gl[\grainSpeed] = 0; ~gl[\grainPitch] = 0.5;
+ ~gl[\grainSize] = 0.2; ~gl[\grainDensity] = 8; ~gl[\grainJitter] = 0.1;)
 
 
 // ---- Output -------------------------------------------------------------

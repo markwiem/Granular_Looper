@@ -39,6 +39,32 @@
 // slightly longer than its play length, so neighbouring slices overlap.
 ~gl[\playRate] = 0.9;
 
+// Playback mode:
+//   \slice  plays each slice straight (speed and pitch both follow playRate)
+//   \grain  plays each slice as overlapping grains, so the speed through the
+//          file (grainSpeed) and the pitch (grainPitch) are set separately.
+//          playRate is not used in this mode.
+~gl[\mode] = \slice;
+
+// Grain mode settings.
+// grainSpeed: how fast the slice moves through the file. 1 is original
+// speed, 0.5 is half speed (the slice lasts twice as long), negative plays
+// backwards, and 0 freezes on the start point for as long as the slice
+// would last at speed 1.
+~gl[\grainSpeed] = 1;
+// grainPitch: pitch as a ratio, 1 is original, 2 an octave up, 0.5 an
+// octave down. For semitones use e.g. 7.midiratio.
+~gl[\grainPitch] = 1;
+// grainSize: length of each grain in seconds. Small (0.02-0.05) is buzzy
+// and textured, large (0.2-0.5) is smoother but smears attacks.
+~gl[\grainSize] = 0.1;
+// grainDensity: how many grains overlap at any moment (1-16). Low values
+// sound grainy and gappy, high values dense and smooth.
+~gl[\grainDensity] = 4;
+// grainJitter: scatters each grain up to this many seconds either side of
+// where the slice is playing. 0 is clean, 0.05-0.2 is shimmering.
+~gl[\grainJitter] = 0;
+
 // Swing: delays every second slice by this fraction of the slice before
 // it. 0 is straight, 1/3 is a triplet shuffle, 0.9 is the most allowed.
 ~gl[\swing] = 0;

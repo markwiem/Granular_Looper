@@ -80,6 +80,17 @@ gl[\sliceTiming] = { |start, length, sampleSeconds, rate, attack, release|
 	}
 };
 
+// The rate that sets how long a slice lasts: playRate in slice mode,
+// grainSpeed in grain mode. A frozen grain slice (speed 0) lasts as long as
+// it would at speed 1.
+gl[\timingRate] = { |ev|
+	if(ev[\grainMode]) {
+		if(ev[\speed] == 0) { 1 } { ev[\speed] }
+	} {
+		ev[\rate]
+	}
+};
+
 // One pass through the slice lists.
 gl[\onePass] = {
 	var count = min(gl[\startPoints].size, gl[\playLengths].size);
@@ -92,17 +103,24 @@ gl[\onePass] = {
 			\startPoint, Pseq(gl[\startPoints].keep(count)),
 			\playLength, Pseq(gl[\playLengths].keep(count)),
 			\buf, Pfunc { gl[\currentBuffer].value },
+			\grainMode, Pfunc { gl[\mode] == \grain },
 			\instrument, Pfunc { |ev|
-				("gl_slice_" ++ ev[\buf].numChannels.clip(1, 2)).asSymbol
+				(if(ev[\grainMode]) { "gl_grain_" } { "gl_slice_" }
+					++ ev[\buf].numChannels.clip(1, 2)).asSymbol
 			},
 			\rate, Pfunc { gl[\playRate] },
+			\speed, Pfunc { gl[\grainSpeed] },
+			\pitch, Pfunc { gl[\grainPitch] },
+			\grainSize, Pfunc { gl[\grainSize].max(0.001) },
+			\density, Pfunc { gl[\grainDensity].clip(1, 32) },
+			\jitter, Pfunc { gl[\grainJitter].max(0) },
 			\amp, Pfunc { gl[\level] },
 			\pan, Pfunc { gl[\panPos] },
 			\out, Pfunc { gl[\outBus] },
 			\timing, Pfunc { |ev|
 				gl[\sliceTiming].(
 					ev[\startPoint], ev[\playLength], ev[\buf].duration,
-					ev[\rate], gl[\attackTime], gl[\releaseTime]
+					gl[\timingRate].(ev), gl[\attackTime], gl[\releaseTime]
 				) ? \silent  // a nil here would end the Pbind
 			},
 			\type, Pfunc { |ev| if(ev[\timing] == \silent) { \rest } { \note } },
