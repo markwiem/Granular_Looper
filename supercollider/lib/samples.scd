@@ -37,10 +37,18 @@ gl[\loadSamples] = { |dir, server|
 };
 
 // Load one file under a given name, replacing any sample with that name.
+// A path that doesn't exist only posts a warning, so a typo can't leave the
+// looper pointing at an empty buffer.
 gl[\loadSample] = { |name, path, server|
 	server = server ? Server.default;
-	gl[\samples][name] !? (_.free);
-	gl[\samples][name] = Buffer.read(server, path);
+	path = path.standardizePath;
+	if(File.exists(path)) {
+		gl[\samples][name] !? (_.free);
+		gl[\samples][name] = Buffer.read(server, path);
+	} {
+		"Granular Looper: no file at %, % not loaded".format(path, name).warn;
+		nil
+	}
 };
 
 // The Buffer named by ~gl[\sampleName], or the first loaded one.
