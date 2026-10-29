@@ -46,15 +46,15 @@ buf.path = samplePath;
 	samplePath, buf.numChannels, buf.duration.round(0.001)
 ).postln;
 
-// Print the first pass so the timing can be checked by eye.
-"start  length  startFrac  attack   hold     release  next in".postln;
+// Print the first two passes so the timing can be checked by eye.
+"start  length  startFrac  attack   hold     release  next in  swing lag".postln;
 events = Pdef(\granularLooper).source.asStream.nextN(
-	min(~gl[\startPoints].size, ~gl[\playLengths].size), ()
+	min(~gl[\startPoints].size, ~gl[\playLengths].size) * 2, ()
 );
 events.do { |ev|
-	"%  %  %  %  %  %  %".format(
+	"%  %  %  %  %  %  %  %".format(
 		*[ev[\startPoint], ev[\playLength], ev[\startFrac], ev[\attack],
-			ev[\hold], ev[\release], ev[\dur]].collect { |v|
+			ev[\hold], ev[\release], ev[\dur], ev[\lag]].collect { |v|
 			v.round(0.0001).asString.padRight(7)
 		}
 	).postln;

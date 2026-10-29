@@ -22,8 +22,14 @@
 // a11wlk01.wav file that ships with SuperCollider is used.
 ~gl[\sampleName] = \BeNice;
 
-// Start positions, scaled 0-1 across the file. As many as you like.
+// Start positions, as many as you like, in the units below.
 ~gl[\startPoints] = [0.35, 0.45, 0.55];
+
+// How startPoints are measured:
+//   \fraction  0-1 across the file (as in the Sonic Pi script)
+//   \percent   0-100 across the file
+//   \seconds   seconds from the start of the file, e.g. [1.5, 1.93, 2.36]
+~gl[\positionUnits] = \fraction;
 
 // How long each slice plays, in seconds of the source file. This is also
 // the time until the next slice starts. Paired with startPoints by index.
@@ -32,6 +38,10 @@
 // Playback rate (1 = original speed and pitch). At 0.9 a slice lasts
 // slightly longer than its play length, so neighbouring slices overlap.
 ~gl[\playRate] = 0.9;
+
+// Swing: delays every second slice by this fraction of the slice before
+// it. 0 is straight, 1/3 is a triplet shuffle, 0.9 is the most allowed.
+~gl[\swing] = 0;
 
 // Envelope times in seconds.
 ~gl[\attackTime] = 0.1;

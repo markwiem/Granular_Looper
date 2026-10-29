@@ -9,6 +9,15 @@
 ~gl[\playRate] = 0.5;
 ~gl[\attackTime] = 0.01; ~gl[\releaseTime] = 0.3;
 
+// Swing every second slice (0 straight, 1/3 triplet shuffle).
+~gl[\swing] = 1/3;
+~gl[\swing] = 0;
+
+// Give start points in seconds or percent instead of 0-1.
+(~gl[\positionUnits] = \seconds; ~gl[\startPoints] = [1.5, 1.9, 2.3, 2.7];)
+(~gl[\positionUnits] = \percent; ~gl[\startPoints] = [35, 45, 55];)
+(~gl[\positionUnits] = \fraction; ~gl[\startPoints] = [0.35, 0.45, 0.55];)
+
 // Swap samples: anything in samples/ by file name, or load one from anywhere.
 ~gl[\samples].keys.postln;
 ~gl[\sampleName] = \a11wlk01;

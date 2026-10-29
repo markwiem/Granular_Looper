@@ -24,7 +24,7 @@ From a terminal, `sclang main.scd` does the same as step 3.
 | File | What it holds |
 | --- | --- |
 | `main.scd` | Boots the server, loads everything below, starts the looper. |
-| `config.scd` | The settings: sample name, start points, play lengths, rate, envelope, output. |
+| `config.scd` | The settings: sample name, start points and their units, play lengths, rate, swing, envelope, output. |
 | `live.scd` | Scratchpad of lines to evaluate while it plays. Never loaded. |
 | `lib/synthdefs.scd` | `\gl_slice_1` / `\gl_slice_2`: mono and stereo slice players. |
 | `lib/samples.scd` | Loads every sound file in `samples/` into `~gl[\samples]`, keyed by file name. |
@@ -63,10 +63,31 @@ Small differences to know about:
 - Mono samples are panned with `Pan2` and stereo with `Balance2`, so a
   centred sample is about 3 dB quieter per channel than at full scale.
 
+## Swing and start-position units
+
+These grew out of the `add_swing` and `improved_scaling` Sonic Pi branches.
+Both default to the original behaviour.
+
+- `~gl[\swing]` delays every second slice by that fraction of the slice
+  before it, so two equal slices sound long-short. 0 is straight, 1/3 is a
+  triplet shuffle (2:1), and it is capped at 0.9. The count carries across
+  passes, so a list with an odd number of slices still alternates evenly.
+  The slice after a swung one stays on the grid, so the loop's overall
+  length doesn't change.
+- `~gl[\positionUnits]` sets how `~gl[\startPoints]` are read: `\fraction`
+  (0-1 across the file, as in Sonic Pi), `\percent` (0-100) or `\seconds`
+  (seconds into the file, the same units as `playLengths`). Positions past
+  either end of the file are clipped to it.
+
+```
+~gl[\swing] = 1/3;
+~gl[\positionUnits] = \seconds; ~gl[\startPoints] = [1.5, 1.9, 2.3, 2.7];
+```
+
 ## Testing without a sound card
 
 `tests/render_nrt.scd` renders the looper offline with the settings in
-`config.scd` and prints the first pass's timing:
+`config.scd` and prints the first two passes' timing:
 
 ```
 sclang tests/render_nrt.scd                # 20 s of samples/ (or a11wlk01) to tests/render.wav
@@ -76,10 +97,11 @@ sclang tests/render_nrt.scd 30 ~/x.wav out.wav
 With the default settings and `a11wlk01.wav` (4.28 s, mono) it prints:
 
 ```
-start  length  startFrac  attack   hold     release  next in
-0.35     0.5      0.35     0.1      0.3556   0.1      0.5
-0.45     5.0      0.45     0.1      2.4176   0.1      5.0
-0.55     1.5      0.55     0.1      1.4667   0.1      1.5
+start  length  startFrac  attack   hold     release  next in  swing lag
+0.35     0.5      0.35     0.1      0.3556   0.1      0.5      0.0
+0.45     5.0      0.45     0.1      2.4176   0.1      5.0      0.0
+0.55     1.5      0.55     0.1      1.4667   0.1      1.5      0.0
+...
 ```
 
 which matches Sonic Pi's math: 0.5 s / 0.9 = 0.556 s, minus 0.2 s of

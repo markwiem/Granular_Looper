@@ -3,8 +3,9 @@
 // Pdef(\granularLooper) steps through ~gl[\startPoints] and
 // ~gl[\playLengths] in order, forever, playing one slice per step. This is
 // the `loop do ... end` from the Sonic Pi script: each slice starts at
-// startPoint (0-1 across the file), plays playLength seconds of the source,
-// and the next slice starts playLength seconds later.
+// startPoint (0-1 across the file by default; see positionUnits), plays
+// playLength seconds of the source, and the next slice starts playLength
+// seconds later, or a little later than that for swung slices.
 //
 // The lists are re-read at the start of every pass and the other settings
 // on every slice, so everything in config.scd can be changed while it runs.
@@ -20,17 +21,44 @@ gl[\secondsToFraction] = { |seconds, sampleSeconds|
 	seconds / sampleSeconds
 };
 
+// A start point in ~gl[\positionUnits] as a fraction (0-1) of the sample:
+//   \fraction  0-1 across the file (the original Sonic Pi behaviour)
+//   \percent   0-100 across the file
+//   \seconds   seconds from the start of the file
+gl[\positionToFraction] = { |position, sampleSeconds, units|
+	switch(units ? \fraction,
+		\fraction, { position },
+		\percent, { position / 100 },
+		\seconds, { gl[\secondsToFraction].(position, sampleSeconds) },
+		{
+			"Granular Looper: unknown positionUnits %, using \\fraction"
+			.format(units).warn;
+			gl[\positionUnits] = \fraction;
+			position
+		}
+	)
+};
+
+// Swing: every second slice starts late by `swing` times the length of the
+// slice before it, so a pair of equal slices sounds long-short. 0 is
+// straight, 1/3 is a triplet shuffle. Capped at 0.9 so a swung slice never
+// lands on the one after it.
+gl[\swingLag] = { |step, previousLength, swing|
+	if(step.odd) { (swing ? 0).clip(0, 0.9) * previousLength } { 0 }
+};
+
 // Work out where one slice starts and how its envelope is shaped, the way
 // Sonic Pi does for `sample buf, start:, finish:, attack:, release:`.
 // `finish` is clipped to the end of the file, the segment's real length
 // (in output seconds) depends on the rate, and `hold` fills whatever the
 // attack and release don't. If attack + release is longer than the segment,
 // both are shortened in proportion so the slice still stops at `finish`.
+// `start` is in ~gl[\positionUnits].
 // Returns [startFrac, hold, attack, release], or nil for a silent slice.
 gl[\sliceTiming] = { |start, length, sampleSeconds, rate, attack, release|
 	var finish, segment, ramps, scale;
 
-	start = start.clip(0, 1);
+	start = gl[\positionToFraction].(start, sampleSeconds, gl[\positionUnits]).clip(0, 1);
 	finish = (start + gl[\secondsToFraction].(length, sampleSeconds)).clip(0, 1);
 	segment = (finish - start) * sampleSeconds / rate.abs;
 	ramps = attack + release;
@@ -87,7 +115,17 @@ gl[\onePass] = {
 	}
 };
 
-gl[\pattern] = Pn(Plazy { gl[\onePass].value });
+// Loop the passes forever. Swing counts slices across passes, so it keeps
+// alternating evenly even when the list has an odd number of slices.
+gl[\pattern] = Plazy {
+	var step = 0, previousLength = 0;
+	Pn(Plazy { gl[\onePass].value }).collect { |ev|
+		ev[\lag] = gl[\swingLag].(step, previousLength, gl[\swing]);
+		previousLength = ev[\dur];
+		step = step + 1;
+		ev
+	}
+};
 
 Pdef(\granularLooper, gl[\pattern]);
 )
