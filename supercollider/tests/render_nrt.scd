@@ -4,16 +4,19 @@
 // checked without a sound card, and prints each slice's timing. Run it from
 // a terminal:
 //
-//     sclang tests/render_nrt.scd [seconds] [sample.wav] [out.wav]
+//     sclang tests/render_nrt.scd [seconds] [sample.wav] [out.wav] [mode]
 //
 // Defaults: 20 seconds, the first file in samples/ (or SuperCollider's
-// a11wlk01.wav), written to tests/render.wav. Uses config.scd as is.
+// a11wlk01.wav), written to tests/render.wav, in the mode set in
+// config.scd. Pass `slice` or `grain` as mode to override it; use "" for
+// the sample to keep the default sample. Otherwise uses config.scd as is.
 
 (
 var args = thisProcess.argv;
 var seconds = (args[0] ? "20").asFloat;
 var root = thisProcess.nowExecutingPath.dirname.dirname;
 var outPath = args[2] ? (root +/+ "tests/render.wav");
+var mode = args[3];
 var server = Server.default;
 var samplePath, soundFile, buf, score, events;
 
@@ -24,7 +27,9 @@ var samplePath, soundFile, buf, score, events;
 (root +/+ "lib/samples.scd").load;
 (root +/+ "lib/looper.scd").load;
 
-samplePath = args[1] ?? {
+mode !? { ~gl[\mode] = mode.asSymbol };
+
+samplePath = args[1] !? { |path| if(path.isEmpty) { nil } { path } } ?? {
 	var file = PathName(~gl[\sampleDir]).files.detect { |f|
 		["wav", "aif", "aiff", "flac"].includesEqual(f.extension.toLower)
 	};
@@ -42,8 +47,8 @@ buf.path = samplePath;
 ~gl[\samples][\test] = buf;
 ~gl[\sampleName] = \test;
 
-"sample: % (% ch, % s)".format(
-	samplePath, buf.numChannels, buf.duration.round(0.001)
+"sample: % (% ch, % s), mode %".format(
+	samplePath, buf.numChannels, buf.duration.round(0.001), ~gl[\mode]
 ).postln;
 
 // Print the first two passes so the timing can be checked by eye.

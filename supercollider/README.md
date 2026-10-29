@@ -26,7 +26,7 @@ From a terminal, `sclang main.scd` does the same as step 3.
 | `main.scd` | Boots the server, loads everything below, starts the looper. |
 | `config.scd` | The settings: sample name, start points and their units, play lengths, rate, swing, envelope, output. |
 | `live.scd` | Scratchpad of lines to evaluate while it plays. Never loaded. |
-| `lib/synthdefs.scd` | `\gl_slice_1` / `\gl_slice_2`: mono and stereo slice players. |
+| `lib/synthdefs.scd` | `\gl_slice_1` / `\gl_slice_2`: mono and stereo slice players. `\gl_grain_1` / `\gl_grain_2`: the grain-mode players. |
 | `lib/samples.scd` | Loads every sound file in `samples/` into `~gl[\samples]`, keyed by file name. |
 | `lib/looper.scd` | `Pdef(\granularLooper)`, the pattern that replaces the Sonic Pi `loop do`. |
 | `tests/render_nrt.scd` | Offline render, for checking output without a sound card. |
@@ -84,6 +84,32 @@ Both default to the original behaviour.
 ~gl[\positionUnits] = \seconds; ~gl[\startPoints] = [1.5, 1.9, 2.3, 2.7];
 ```
 
+## Grain mode
+
+`~gl[\mode] = \grain` plays every slice through `Warp1` instead of
+`PlayBuf`: many short overlapping grains read from a pointer that moves
+through the slice. The pointer's speed and the grains' pitch are separate,
+so a slice can be slowed down without dropping in pitch, pitched up without
+getting shorter, or frozen in place. Start points, play lengths, units,
+swing and the envelope all work the same as in slice mode; `playRate` is
+not used.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `grainSpeed` | 1 | Speed through the file. 0.5 is half speed, negative is backwards, 0 freezes on the start point for as long as the slice would last at speed 1. |
+| `grainPitch` | 1 | Pitch ratio. 2 is an octave up; `7.midiratio` is a fifth up. |
+| `grainSize` | 0.1 | Seconds per grain. |
+| `grainDensity` | 4 | Grains overlapping at once (1-32). Level is compensated so it stays close to slice mode. |
+| `grainJitter` | 0 | Scatters each grain up to this many seconds around the pointer. |
+
+```
+(~gl[\mode] = \grain; ~gl[\grainSpeed] = 0.5; ~gl[\grainPitch] = 1;)
+```
+
+Granular stretching sounds clean on pads, voices and textures, and smears
+drum hits at big stretches, because each attack is repeated across
+overlapping grains. Slice mode stays the better choice for punchy material.
+
 ## Testing without a sound card
 
 `tests/render_nrt.scd` renders the looper offline with the settings in
@@ -92,6 +118,7 @@ Both default to the original behaviour.
 ```
 sclang tests/render_nrt.scd                # 20 s of samples/ (or a11wlk01) to tests/render.wav
 sclang tests/render_nrt.scd 30 ~/x.wav out.wav
+sclang tests/render_nrt.scd 20 "" tests/grain.wav grain   # grain mode
 ```
 
 With the default settings and `a11wlk01.wav` (4.28 s, mono) it prints:
